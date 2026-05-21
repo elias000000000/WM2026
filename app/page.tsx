@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { NextMatchHero } from '@/components/home/NextMatchHero'
 import { RecentResults } from '@/components/home/RecentResults'
-import { Skeleton } from '@/components/ui/Skeleton'
 import type { DbTip } from '@/types/database'
 
 export const revalidate = 30

@@ -11,10 +11,13 @@ import { AvatarPicker } from '@/components/profile/AvatarPicker'
 import { GroupInviteCard } from '@/components/profile/GroupInviteCard'
 import { updateProfile } from '@/app/actions/groups'
 import { createClient } from '@/lib/supabase/client'
+import type { DbPlayer, DbGroup } from '@/types/database'
+
+type PlayerWithGroup = DbPlayer & { groups: DbGroup | null }
 
 export default function ProfilPage() {
-  const [player, setPlayer] = useState<any>(null)
-  const [group, setGroup] = useState<any>(null)
+  const [player, setPlayer] = useState<PlayerWithGroup | null>(null)
+  const [group, setGroup] = useState<DbGroup | null>(null)
   const [username, setUsername] = useState('')
   const [color, setColor] = useState('#3B82F6')
   const [avatar, setAvatar] = useState('⚽')
