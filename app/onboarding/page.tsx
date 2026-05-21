@@ -43,7 +43,7 @@ export default function OnboardingPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://wm-2026-zeta.vercel.app'}/api/auth/callback`,
       },
     })
 
