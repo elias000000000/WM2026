@@ -23,33 +23,41 @@ export function LeaderboardTable({
   const [entries, setEntries] = useState<LeaderboardEntry[]>(initialEntries)
 
   useEffect(() => {
-    const supabase = createClient()
+    let cleanup: (() => void) | undefined
 
-    const channel = supabase
-      .channel(`leaderboard-${groupId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'players',
-          filter: `group_id=eq.${groupId}`,
-        },
-        (payload) => {
-          setEntries((prev) =>
-            prev
-              .map((e) =>
-                e.id === payload.new.id
-                  ? { ...e, total_points: payload.new.total_points }
-                  : e
-              )
-              .sort((a, b) => b.total_points - a.total_points)
-          )
-        }
-      )
-      .subscribe()
+    try {
+      const supabase = createClient()
 
-    return () => { supabase.removeChannel(channel) }
+      const channel = supabase
+        .channel(`leaderboard-${groupId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'players',
+            filter: `group_id=eq.${groupId}`,
+          },
+          (payload) => {
+            setEntries((prev) =>
+              prev
+                .map((e) =>
+                  e.id === payload.new.id
+                    ? { ...e, total_points: payload.new.total_points }
+                    : e
+                )
+                .sort((a, b) => b.total_points - a.total_points)
+            )
+          }
+        )
+        .subscribe()
+
+      cleanup = () => { supabase.removeChannel(channel) }
+    } catch {
+      // Realtime not available
+    }
+
+    return () => { cleanup?.() }
   }, [groupId])
 
   return (
