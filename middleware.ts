@@ -1,78 +1,30 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = ['/onboarding', '/api', '/gruppe']
 
-export async function middleware(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  // If Supabase env vars are missing, let every request through unblocked
-  // so the app at least loads and shows a useful error on login attempt
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.next()
-  }
-
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  })
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      get(name: string) {
-        return request.cookies.get(name)?.value
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        request.cookies.set({ name, value, ...options })
-        response = NextResponse.next({
-          request: { headers: request.headers },
-        })
-        response.cookies.set({ name, value, ...options })
-      },
-      remove(name: string, options: CookieOptions) {
-        request.cookies.set({ name, value: '', ...options })
-        response = NextResponse.next({
-          request: { headers: request.headers },
-        })
-        response.cookies.set({ name, value: '', ...options })
-      },
-    },
-  })
-
-  const { data: { user } } = await supabase.auth.getUser()
-
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
 
-  // If visiting /gruppe/[code] without session, save code and redirect to onboarding
-  if (pathname.startsWith('/gruppe/') && !user) {
+  // Detect Supabase session via cookie — no network calls, no crash risk
+  const hasSession = request.cookies.getAll().some(
+    (c) => c.name.startsWith('sb-') && c.name.includes('auth-token')
+  )
+
+  // Save invite code before redirecting to onboarding
+  if (pathname.startsWith('/gruppe/') && !hasSession) {
     const code = pathname.split('/gruppe/')[1]
-    const redirectUrl = new URL('/onboarding', request.url)
-    response = NextResponse.redirect(redirectUrl)
+    const response = NextResponse.redirect(new URL('/onboarding', request.url))
     response.cookies.set('pending_invite_code', code, { path: '/', maxAge: 3600 })
     return response
   }
 
   // Redirect unauthenticated users to onboarding
-  if (!user && !isPublicPath && pathname !== '/') {
-    const redirectUrl = new URL('/onboarding', request.url)
-    return NextResponse.redirect(redirectUrl)
+  if (!hasSession && !isPublicPath && pathname !== '/') {
+    return NextResponse.redirect(new URL('/onboarding', request.url))
   }
 
-  // Redirect authenticated users away from onboarding (if they have a player profile)
-  if (user && pathname === '/onboarding') {
-    const { data: player } = await supabase
-      .from('players')
-      .select('id')
-      .eq('user_id', user.id)
-      .single()
-
-    if (player) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-  }
-
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
