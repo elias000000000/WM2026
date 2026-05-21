@@ -22,11 +22,9 @@ export default function OnboardingPage() {
   const [pendingCode, setPendingCode] = useState<string | undefined>()
 
   useEffect(() => {
-    // Read pending invite code from cookie
     const match = document.cookie.match(/pending_invite_code=([^;]+)/)
     if (match) setPendingCode(match[1])
 
-    // Check URL step param (after magic link redirect)
     const params = new URLSearchParams(window.location.search)
     if (params.get('step') === 'profile') {
       setStep('profile')
@@ -61,7 +59,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Step dots */}
       {step !== 'welcome' && (
         <div className="flex justify-center gap-2 pt-6 pb-2">
           {Array.from({ length: totalSteps }).map((_, i) => (
