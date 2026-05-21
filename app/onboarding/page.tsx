@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep'
 import { ProfileStep } from '@/components/onboarding/ProfileStep'
 import { GroupStep } from '@/components/onboarding/GroupStep'
-import { createClient } from '@/lib/supabase/client'
+import { sendMagicLink } from '@/app/actions/auth'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
@@ -39,17 +39,11 @@ export default function OnboardingPage() {
     setEmailLoading(true)
     setEmailError('')
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://wm-2026-zeta.vercel.app'}/api/auth/callback`,
-      },
-    })
+    const result = await sendMagicLink(email)
 
     setEmailLoading(false)
-    if (error) {
-      setEmailError(error.message)
+    if (result.error) {
+      setEmailError(result.error)
     } else {
       setStep('email-sent')
     }
