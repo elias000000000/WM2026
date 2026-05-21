@@ -33,17 +33,24 @@ export default function OnboardingPage() {
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.includes('@')) { setEmailError('Bitte eine gültige E-Mail-Adresse eingeben'); return }
+    if (!email.includes('@')) {
+      setEmailError('Bitte eine gültige E-Mail-Adresse eingeben')
+      return
+    }
     setEmailLoading(true)
     setEmailError('')
 
-    const result = await sendMagicLink(email)
-
-    setEmailLoading(false)
-    if (result.error) {
-      setEmailError(result.error)
-    } else {
-      setStep('email-sent')
+    try {
+      const result = await sendMagicLink(email)
+      if (result.error) {
+        setEmailError(result.error)
+      } else {
+        setStep('email-sent')
+      }
+    } catch {
+      setEmailError('Verbindungsfehler. Bitte erneut versuchen.')
+    } finally {
+      setEmailLoading(false)
     }
   }
 
@@ -111,6 +118,9 @@ export default function OnboardingPage() {
                   <p className="font-semibold text-green-800">{email}</p>
                   <p className="text-green-700 text-sm mt-1">
                     Klick auf den Link in der E-Mail, um fortzufahren.
+                  </p>
+                  <p className="text-green-600 text-xs mt-2">
+                    Nichts bekommen? Schau im Spam-Ordner nach oder warte kurz.
                   </p>
                 </div>
               ) : (
