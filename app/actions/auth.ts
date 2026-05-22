@@ -2,6 +2,23 @@
 
 import { createClient } from '@/lib/supabase/server'
 
+function translateAuthError(msg: string): string {
+  const m = msg.toLowerCase()
+  if (m.includes('rate limit') || m.includes('too many')) {
+    return 'Zu viele Anmeldeversuche. Bitte warte einige Minuten und versuche es erneut.'
+  }
+  if (m.includes('invalid email') || m.includes('invalid format')) {
+    return 'Ungültige E-Mail-Adresse.'
+  }
+  if (m.includes('email not confirmed')) {
+    return 'E-Mail-Adresse nicht bestätigt.'
+  }
+  if (m.includes('network') || m.includes('fetch')) {
+    return 'Netzwerkfehler. Bitte Internetverbindung prüfen.'
+  }
+  return msg
+}
+
 export async function sendMagicLink(email: string): Promise<{ error?: string }> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -19,9 +36,9 @@ export async function sendMagicLink(email: string): Promise<{ error?: string }> 
       options: { emailRedirectTo: `${appUrl}/api/auth/callback` },
     })
 
-    if (error) return { error: error.message }
+    if (error) return { error: translateAuthError(error.message) }
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Unbekannter Fehler beim Senden.' }
+    return { error: e instanceof Error ? translateAuthError(e.message) : 'Unbekannter Fehler beim Senden.' }
   }
 }

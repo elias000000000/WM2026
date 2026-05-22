@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef } from 'react'
+import { createContext, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -10,9 +10,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    // Keep a single realtime connection alive; specific subscriptions
-    // are created in individual components.
+    let supabase
+    try { supabase = createClient() } catch { return }
+
     channelRef.current = supabase.channel('app-global')
     channelRef.current.subscribe()
 

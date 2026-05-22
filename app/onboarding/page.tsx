@@ -11,27 +11,32 @@ import { Button } from '@/components/ui/Button'
 
 type Step = 'welcome' | 'email' | 'email-sent' | 'profile' | 'group'
 
+const RESEND_COOLDOWN = 60
+
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('welcome')
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const [username, setUsername] = useState('')
   const [color, setColor] = useState('#3B82F6')
   const [avatar, setAvatar] = useState('⚽')
   const [pendingCode, setPendingCode] = useState<string | undefined>()
 
   useEffect(() => {
-    // Read pending invite code from cookie
     const match = document.cookie.match(/pending_invite_code=([^;]+)/)
     if (match) setPendingCode(match[1])
 
-    // Check URL step param (after magic link redirect)
     const params = new URLSearchParams(window.location.search)
-    if (params.get('step') === 'profile') {
-      setStep('profile')
-    }
+    if (params.get('step') === 'profile') setStep('profile')
   }, [])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,6 +49,25 @@ export default function OnboardingPage() {
         setEmailError(result.error)
       } else {
         setStep('email-sent')
+        setResendCooldown(RESEND_COOLDOWN)
+      }
+    } catch {
+      setEmailError('Verbindungsfehler. Bitte erneut versuchen.')
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    if (resendCooldown > 0) return
+    setEmailLoading(true)
+    setEmailError('')
+    try {
+      const result = await sendMagicLink(email)
+      if (result.error) {
+        setEmailError(result.error)
+      } else {
+        setResendCooldown(RESEND_COOLDOWN)
       }
     } catch {
       setEmailError('Verbindungsfehler. Bitte erneut versuchen.')
@@ -64,7 +88,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Step dots */}
       {step !== 'welcome' && (
         <div className="flex justify-center gap-2 pt-6 pb-2">
           {Array.from({ length: totalSteps }).map((_, i) => (
@@ -112,15 +135,30 @@ export default function OnboardingPage() {
               </div>
 
               {step === 'email-sent' ? (
-                <div className="bg-green-50 rounded-2xl p-5 text-center">
-                  <p className="text-3xl mb-2">✉️</p>
+                <div className="bg-green-50 rounded-2xl p-5 text-center flex flex-col gap-3">
+                  <p className="text-3xl">✉️</p>
                   <p className="font-semibold text-green-800">{email}</p>
-                  <p className="text-green-700 text-sm mt-1">
+                  <p className="text-green-700 text-sm">
                     Klick auf den Link in der E-Mail, um fortzufahren.
                   </p>
-                  <p className="text-green-600 text-xs mt-3">
+                  <p className="text-green-600 text-xs">
                     Nichts angekommen? Schau auch im Spam-Ordner nach.
                   </p>
+                  {emailError && (
+                    <p className="text-xs text-red-500">{emailError}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendCooldown > 0 || emailLoading}
+                    className="text-sm text-brand-blue disabled:text-gray-400 font-medium"
+                  >
+                    {emailLoading
+                      ? 'Wird gesendet…'
+                      : resendCooldown > 0
+                      ? `Erneut senden (${resendCooldown}s)`
+                      : 'E-Mail erneut senden'}
+                  </button>
                 </div>
               ) : (
                 <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">

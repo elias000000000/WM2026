@@ -49,7 +49,7 @@ export function MatchCard({
       <Card padding={compact ? 'sm' : 'md'}>
         {showRoundLabel && (
           <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">
-            {ROUND_LABELS[match.round]}
+            {ROUND_LABELS[match.round as keyof typeof ROUND_LABELS] ?? match.round}
           </p>
         )}
 

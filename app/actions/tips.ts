@@ -5,27 +5,31 @@ import { createClient } from '@/lib/supabase/server'
 import { isLocked } from '@/lib/lockout'
 
 export async function saveTip(matchId: string, homeTip: number, awayTip: number) {
-  const supabase = createClient()
+  if (!Number.isInteger(homeTip) || !Number.isInteger(awayTip)) throw new Error('Ungültiger Tipp')
+  if (homeTip < 0 || homeTip > 20 || awayTip < 0 || awayTip > 20) throw new Error('Ungültiger Tipp')
+
+  let supabase
+  try { supabase = createClient() } catch (e) { throw new Error(e instanceof Error ? e.message : 'Server-Fehler') }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Nicht angemeldet')
 
-  const { data: match } = await supabase
+  const { data: match, error: matchError } = await supabase
     .from('matches')
     .select('kickoff_utc, id')
     .eq('id', matchId)
     .single()
 
-  if (!match) throw new Error('Spiel nicht gefunden')
+  if (matchError || !match) throw new Error('Spiel nicht gefunden')
   if (isLocked(match.kickoff_utc)) throw new Error('Tipp-Abgabe ist gesperrt (weniger als 30 Minuten bis Anpfiff)')
 
-  const { data: player } = await supabase
+  const { data: player, error: playerError } = await supabase
     .from('players')
     .select('id')
     .eq('user_id', user.id)
     .single()
 
-  if (!player) throw new Error('Spielerprofil nicht gefunden')
+  if (playerError || !player) throw new Error('Spielerprofil nicht gefunden')
 
   const { error } = await supabase
     .from('tips')
@@ -50,18 +54,19 @@ export async function addComment(tipId: string, text: string) {
   if (!text.trim()) throw new Error('Kommentar darf nicht leer sein')
   if (text.length > 280) throw new Error('Kommentar zu lang (max. 280 Zeichen)')
 
-  const supabase = createClient()
+  let supabase
+  try { supabase = createClient() } catch (e) { throw new Error(e instanceof Error ? e.message : 'Server-Fehler') }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Nicht angemeldet')
 
-  const { data: player } = await supabase
+  const { data: player, error: playerError } = await supabase
     .from('players')
     .select('id')
     .eq('user_id', user.id)
     .single()
 
-  if (!player) throw new Error('Spielerprofil nicht gefunden')
+  if (playerError || !player) throw new Error('Spielerprofil nicht gefunden')
 
   const { error } = await supabase.from('comments').insert({
     tip_id: tipId,
