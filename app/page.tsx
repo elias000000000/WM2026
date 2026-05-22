@@ -4,7 +4,7 @@ import { NextMatchHero } from '@/components/home/NextMatchHero'
 import { RecentResults } from '@/components/home/RecentResults'
 import type { DbTip } from '@/types/database'
 
-export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const supabase = createClient()

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
 import type { LeaderboardEntry } from '@/types/database'
 
-export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 export default async function RanglistePage() {
   const supabase = createClient()

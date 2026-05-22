@@ -4,7 +4,7 @@ import { MatchCard } from '@/components/matches/MatchCard'
 import { ROUND_LABELS, ROUND_ORDER, type RoundKey } from '@/types/match'
 import type { DbTip, DbPlayer } from '@/types/database'
 
-export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 interface TipWithPlayer extends DbTip {
   player: DbPlayer

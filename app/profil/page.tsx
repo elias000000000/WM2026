@@ -26,10 +26,11 @@ export default function ProfilPage() {
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    const supabase = createClient()
+    let supabase
+    try { supabase = createClient() } catch { return }
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return
-      const { data: p } = await supabase
+      if (!user) { window.location.href = '/onboarding'; return }
+      const { data: p } = await supabase!
         .from('players')
         .select('*, groups(*)')
         .eq('user_id', user.id)
@@ -41,7 +42,7 @@ export default function ProfilPage() {
         setColor(p.color)
         setAvatar(p.avatar)
       }
-    })
+    }).catch(() => { window.location.href = '/onboarding' })
   }, [])
 
   function handleSave(e: React.FormEvent) {
@@ -60,8 +61,10 @@ export default function ProfilPage() {
   }
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+    } catch { /* ignore */ }
     window.location.href = '/onboarding'
   }
 

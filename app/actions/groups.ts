@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { generateInviteCode } from '@/lib/invite'
 
 export async function createGroup(name: string, username: string, color: string, avatar: string) {
-  const supabase = createClient()
+  let supabase
+  try { supabase = createClient() } catch (e) { throw new Error(e instanceof Error ? e.message : 'Server-Fehler') }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Nicht angemeldet')
@@ -34,7 +35,8 @@ export async function createGroup(name: string, username: string, color: string,
 }
 
 export async function joinGroup(inviteCode: string, username: string, color: string, avatar: string) {
-  const supabase = createClient()
+  let supabase
+  try { supabase = createClient() } catch (e) { throw new Error(e instanceof Error ? e.message : 'Server-Fehler') }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Nicht angemeldet')
@@ -64,7 +66,8 @@ export async function joinGroup(inviteCode: string, username: string, color: str
 }
 
 export async function updateProfile(username: string, color: string, avatar: string) {
-  const supabase = createClient()
+  let supabase
+  try { supabase = createClient() } catch (e) { throw new Error(e instanceof Error ? e.message : 'Server-Fehler') }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Nicht angemeldet')
