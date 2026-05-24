@@ -50,12 +50,12 @@ export default function ProfilPage() {
     if (username.trim().length < 2) { setError('Mindestens 2 Zeichen'); return }
     setError('')
     startTransition(async () => {
-      try {
-        await updateProfile(username, color, avatar)
+      const result = await updateProfile(username, color, avatar)
+      if (result.error) {
+        setError(result.error)
+      } else {
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Fehler beim Speichern')
       }
     })
   }

@@ -26,12 +26,12 @@ export function GroupStep({ username, color, avatar, pendingInviteCode }: GroupS
     if (!groupName.trim()) { setError('Gruppenname ist erforderlich'); return }
     setLoading(true)
     setError('')
-    try {
-      await createGroup(groupName, username, color, avatar)
-      window.location.href = '/'
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Fehler beim Erstellen der Gruppe')
+    const result = await createGroup(groupName, username, color, avatar)
+    if (result.error) {
+      setError(result.error)
       setLoading(false)
+    } else {
+      window.location.href = '/'
     }
   }
 
@@ -40,12 +40,12 @@ export function GroupStep({ username, color, avatar, pendingInviteCode }: GroupS
     if (!inviteCode.trim()) { setError('Einladungscode ist erforderlich'); return }
     setLoading(true)
     setError('')
-    try {
-      await joinGroup(inviteCode, username, color, avatar)
-      window.location.href = '/'
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Ungültiger Einladungscode')
+    const result = await joinGroup(inviteCode, username, color, avatar)
+    if (result.error) {
+      setError(result.error)
       setLoading(false)
+    } else {
+      window.location.href = '/'
     }
   }
 
