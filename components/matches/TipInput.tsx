@@ -27,13 +27,13 @@ export function TipInput({ matchId, initialHome = 0, initialAway = 0, onSaved }:
   function handleSave() {
     setError(null)
     startTransition(async () => {
-      try {
-        await saveTip(matchId, home, away)
+      const result = await saveTip(matchId, home, away)
+      if (result.error) {
+        setError(result.error)
+      } else {
         setSaved(true)
         onSaved?.()
         setTimeout(() => setSaved(false), 2000)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Fehler beim Speichern')
       }
     })
   }

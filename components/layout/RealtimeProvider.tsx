@@ -2,25 +2,23 @@
 
 import { createContext, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 const RealtimeContext = createContext<null>(null)
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
-  const clientRef = useRef<SupabaseClient | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
-    try {
-      const supabase = createClient()
-      clientRef.current = supabase
-      supabase.channel('app-global').subscribe()
-    } catch {
-      // Supabase not configured client-side — realtime disabled
-    }
+    let supabase
+    try { supabase = createClient() } catch { return }
+
+    channelRef.current = supabase.channel('app-global')
+    channelRef.current.subscribe()
 
     return () => {
-      if (clientRef.current) {
-        clientRef.current.removeAllChannels()
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
       }
     }
   }, [])

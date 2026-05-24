@@ -2,40 +2,43 @@ import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { CookieOptions } from '@supabase/ssr'
 
-export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase-Konfiguration fehlt: NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY müssen in Vercel gesetzt sein.')
+function getConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !anon) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL oder NEXT_PUBLIC_SUPABASE_ANON_KEY fehlt')
   }
+  if (!url.startsWith('https://') && !url.startsWith('http://')) {
+    throw new Error(`NEXT_PUBLIC_SUPABASE_URL ist ungültig: "${url}" — muss mit https:// beginnen`)
+  }
+  return { url, anon }
+}
 
+function cookieHandlers() {
   const cookieStore = cookies()
-
-  return createSupabaseServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        try { cookieStore.set({ name, value, ...options }) } catch { /* Server Component */ }
-      },
-      remove(name: string, options: CookieOptions) {
-        try { cookieStore.set({ name, value: '', ...options }) } catch { /* Server Component */ }
-      },
+  return {
+    get(name: string) {
+      return cookieStore.get(name)?.value
     },
-  })
+    set(name: string, value: string, options: CookieOptions) {
+      try { cookieStore.set({ name, value, ...options }) } catch { /* Server Component */ }
+    },
+    remove(name: string, options: CookieOptions) {
+      try { cookieStore.set({ name, value: '', ...options }) } catch { /* Server Component */ }
+    },
+  }
+}
+
+export function createClient() {
+  const { url, anon } = getConfig()
+  return createSupabaseServerClient(url, anon, { cookies: cookieHandlers() })
 }
 
 export function createServiceClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase-Service-Konfiguration fehlt.')
-  }
-
-  return createSupabaseServerClient(supabaseUrl, serviceRoleKey, {
+  const { url } = getConfig()
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY fehlt')
+  return createSupabaseServerClient(url, serviceKey, {
     cookies: { get: () => undefined, set: () => {}, remove: () => {} },
     auth: { persistSession: false },
   })

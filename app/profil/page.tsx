@@ -26,26 +26,23 @@ export default function ProfilPage() {
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    try {
-      const supabase = createClient()
-      supabase.auth.getUser().then(async ({ data: { user } }) => {
-        if (!user) return
-        const { data: p } = await supabase
-          .from('players')
-          .select('*, groups(*)')
-          .eq('user_id', user.id)
-          .single()
-        if (p) {
-          setPlayer(p as PlayerWithGroup)
-          setGroup((p as PlayerWithGroup).groups)
-          setUsername(p.username)
-          setColor(p.color)
-          setAvatar(p.avatar)
-        }
-      })
-    } catch {
-      // Supabase not configured
-    }
+    let supabase
+    try { supabase = createClient() } catch { return }
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { window.location.href = '/onboarding'; return }
+      const { data: p } = await supabase!
+        .from('players')
+        .select('*, groups(*)')
+        .eq('user_id', user.id)
+        .single()
+      if (p) {
+        setPlayer(p)
+        setGroup(p.groups)
+        setUsername(p.username)
+        setColor(p.color)
+        setAvatar(p.avatar)
+      }
+    }).catch(() => { window.location.href = '/onboarding' })
   }, [])
 
   function handleSave(e: React.FormEvent) {
@@ -53,12 +50,12 @@ export default function ProfilPage() {
     if (username.trim().length < 2) { setError('Mindestens 2 Zeichen'); return }
     setError('')
     startTransition(async () => {
-      try {
-        await updateProfile(username, color, avatar)
+      const result = await updateProfile(username, color, avatar)
+      if (result.error) {
+        setError(result.error)
+      } else {
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Fehler beim Speichern')
       }
     })
   }
@@ -96,6 +93,7 @@ export default function ProfilPage() {
         </div>
       </div>
 
+      {/* Edit profile */}
       <Card>
         <form onSubmit={handleSave} className="flex flex-col gap-4">
           <h2 className="font-semibold text-gray-900">Profil bearbeiten</h2>
@@ -127,10 +125,12 @@ export default function ProfilPage() {
         </form>
       </Card>
 
+      {/* Group invite */}
       {group && (
         <GroupInviteCard inviteCode={group.invite_code} groupName={group.name} />
       )}
 
+      {/* Logout */}
       <Button variant="ghost" className="w-full text-red-500" onClick={handleLogout}>
         Abmelden
       </Button>

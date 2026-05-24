@@ -6,10 +6,14 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
 
   if (code) {
-    const supabase = createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}/onboarding?step=profile`)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (!error) {
+        return NextResponse.redirect(`${origin}/onboarding?step=profile`)
+      }
+    } catch {
+      // fall through to error redirect
     }
   }
 
