@@ -7,7 +7,12 @@ import type { DbTip } from '@/types/database'
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const supabase = createClient()
+  let supabase
+  try {
+    supabase = createClient()
+  } catch {
+    redirect('/onboarding')
+  }
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/onboarding')
@@ -20,7 +25,6 @@ export default async function HomePage() {
 
   if (!player) redirect('/onboarding')
 
-  // Next upcoming match
   const { data: nextMatch } = await supabase
     .from('matches')
     .select('*')
@@ -29,7 +33,6 @@ export default async function HomePage() {
     .limit(1)
     .single()
 
-  // Recent finished matches (last 3)
   const { data: recentMatches } = await supabase
     .from('matches')
     .select('*')
@@ -37,7 +40,6 @@ export default async function HomePage() {
     .order('kickoff_utc', { ascending: false })
     .limit(3)
 
-  // My tips for relevant matches
   const matchIds = [
     ...(nextMatch ? [nextMatch.id] : []),
     ...(recentMatches?.map((m) => m.id) ?? []),
@@ -54,18 +56,15 @@ export default async function HomePage() {
     tipsByMatchId = Object.fromEntries((tips ?? []).map((t) => [t.match_id, t]))
   }
 
-  // My tip for next match
   const nextMatchTip = nextMatch ? (tipsByMatchId[nextMatch.id] ?? null) : null
 
   return (
     <div className="px-4 pt-6 pb-4 max-w-lg mx-auto flex flex-col gap-6">
-      {/* Greeting */}
       <div>
         <p className="text-gray-500 text-sm">Willkommen zurück,</p>
         <h1 className="text-2xl font-black text-gray-900">{player.username}</h1>
       </div>
 
-      {/* Next match hero */}
       {nextMatch ? (
         <NextMatchHero
           match={nextMatch}
@@ -86,7 +85,6 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* Recent results */}
       {recentMatches && recentMatches.length > 0 && (
         <RecentResults
           matches={recentMatches}

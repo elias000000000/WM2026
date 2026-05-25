@@ -24,7 +24,6 @@ export default async function SpielePage() {
 
   if (!player) redirect('/onboarding')
 
-  // All matches
   const { data: matches } = await supabase
     .from('matches')
     .select('*')
@@ -32,7 +31,6 @@ export default async function SpielePage() {
 
   if (!matches) return <div className="p-4 text-gray-500">Spiele konnten nicht geladen werden.</div>
 
-  // My tips
   const { data: myTipsRaw } = await supabase
     .from('tips')
     .select('*')
@@ -42,7 +40,6 @@ export default async function SpielePage() {
     (myTipsRaw ?? []).map((t) => [t.match_id, t])
   )
 
-  // Other tips (only for matches that have started)
   const startedMatchIds = matches
     .filter((m) => new Date(m.kickoff_utc) < new Date())
     .map((m) => m.id)
@@ -63,7 +60,6 @@ export default async function SpielePage() {
     }
   }
 
-  // Group matches by round in order
   const matchesByRound: Record<string, typeof matches> = {}
   for (const m of matches) {
     if (!matchesByRound[m.round]) matchesByRound[m.round] = []

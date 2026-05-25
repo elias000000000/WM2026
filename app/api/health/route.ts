@@ -9,7 +9,7 @@ export async function GET() {
 
   return NextResponse.json({
     NEXT_PUBLIC_SUPABASE_URL: supabaseUrl
-      ? `${supabaseUrl.slice(0, 30)}...` // partial, not sensitive
+      ? `${supabaseUrl.slice(0, 30)}...`
       : 'FEHLT ❌',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey
       ? `${anonKey.slice(0, 12)}... (${anonKey.length} Zeichen)`

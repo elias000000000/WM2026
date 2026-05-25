@@ -25,7 +25,6 @@ export default async function RanglistePage() {
     .eq('group_id', player.group_id)
     .order('total_points', { ascending: false })
 
-  // Compute exact and correct counts per player
   const playerIds = (players ?? []).map((p) => p.id)
 
   const { data: allTips } = await supabase
@@ -39,7 +38,6 @@ export default async function RanglistePage() {
     if (!stats[tip.player_id]) stats[tip.player_id] = { exact: 0, correct: 0 }
     if (tip.points_awarded === 3) stats[tip.player_id].exact++
     else if (tip.points_awarded === 2) stats[tip.player_id].correct++
-    // HF/Final have multiplied points, so 6=exact SF, 9=exact Final, etc.
     else if ((tip.points_awarded ?? 0) > 3) stats[tip.player_id].exact++
   }
 
