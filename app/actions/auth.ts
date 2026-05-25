@@ -4,11 +4,21 @@ import { createClient } from '@/lib/supabase/server'
 
 function translateAuthError(msg: string): string {
   const m = msg.toLowerCase()
-  if (m.includes('rate limit') || m.includes('too many')) {
-    return 'Zu viele Anmeldeversuche. Bitte warte einige Minuten und versuche es erneut.'
+  if (
+    m.includes('rate limit') ||
+    m.includes('too many') ||
+    m.includes('email sending') ||
+    m.includes('email rate') ||
+    m.includes('for security purposes') ||
+    m.includes('once every')
+  ) {
+    return 'E-Mail-Limit erreicht (Supabase erlaubt max. 4/Stunde). Bitte 60 Sek. warten oder in 1 Std. erneut versuchen.'
   }
   if (m.includes('invalid email') || m.includes('invalid format')) {
     return 'Ungültige E-Mail-Adresse.'
+  }
+  if (m.includes('signup') && m.includes('disabled')) {
+    return 'Neue Registrierungen sind aktuell deaktiviert.'
   }
   if (m.includes('otp') || m.includes('token') || m.includes('expired') || m.includes('invalid')) {
     return 'Ungültiger oder abgelaufener Code. Fordere einen neuen an.'
