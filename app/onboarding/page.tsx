@@ -101,7 +101,7 @@ export default function OnboardingPage() {
 
   async function handleOtpSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (otpCode.trim().length < 6) { setOtpError('Bitte den vollständigen 6-stelligen Code eingeben'); return }
+    if (otpCode.trim().length < 6) { setOtpError('Bitte den vollständigen Code aus der E-Mail eingeben'); return }
     setOtpLoading(true)
     setOtpError('')
     try {
@@ -167,16 +167,16 @@ export default function OnboardingPage() {
                   {/* OTP Code input — primary action */}
                   <form onSubmit={handleOtpSubmit} className="flex flex-col gap-3">
                     <label className="text-sm font-semibold text-gray-700">
-                      6-stelliger Code aus der E-Mail
+                      Code aus der E-Mail eingeben
                     </label>
                     <input
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
-                      maxLength={6}
+                      maxLength={8}
                       value={otpCode}
                       onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, '')); setOtpError('') }}
-                      placeholder="000000"
+                      placeholder="········"
                       autoFocus
                       className="w-full text-center text-3xl font-black tracking-[0.4em] py-4 border-2 rounded-xl border-gray-200 focus:border-brand-blue focus:outline-none transition-colors"
                     />
